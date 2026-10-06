@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard – Little Planet Academy</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .dash { max-width: 1000px; margin: 20px auto; padding: 0 14px 60px; }
+    .welcome { background: linear-gradient(135deg, var(--purple-dark), var(--purple)); color: #fff; border-radius: 16px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .welcome h1 { font-size: 1.3rem; }
+    .btn-logout { background: transparent; border: 1px solid #fff; color: #fff; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tabs button {
+      padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: #fff;
+      cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--muted);
+    }
+    .tabs button.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+      margin-bottom: 12px; box-shadow: 0 2px 10px rgba(91,44,138,0.05);
+    }
+    .student-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer;
+    }
+    .student-item:last-child { border-bottom: none; }
+    .student-item:hover { background: var(--purple-soft); margin: 0 -8px; padding: 12px 8px; border-radius: 8px; }
+    .student-name { font-weight: 600; color: var(--purple-dark); }
+    .student-class { font-size: 0.85rem; color: var(--muted); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-sm {
+      padding: 6px 12px; border-radius: 8px; border: none; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary { background: var(--purple); color: #fff; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-secondary { background: var(--purple-soft); color: var(--purple); }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200;
+      display: none; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 16px; max-width: 560px; width: 100%; max-height: 90vh;
+      overflow-y: auto; padding: 22px;
+    }
+    .modal h2 { font-size: 1.15rem; color: var(--purple-dark); margin-bottom: 14px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 0.95rem;
+    }
+    .subject-row {
+      display: grid; grid-template-columns: 1.6fr 0.7fr 0.7fr; gap: 8px; margin-bottom: 8px; align-items: center;
+    }
+    .subject-row input, .subject-row select { padding: 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 0.9rem; width: 100%; }
+    .total-box { background: var(--purple-soft); padding: 12px; border-radius: 10px; margin-top: 12px; font-weight: 600; }
+    .btn-block { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+    .search-box { margin-bottom: 14px; }
+    .search-box input { width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; }
+    .filter-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-row select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); }
+    .empty { color: var(--muted); padding: 16px 0; }
+    .class-checks { display: flex; flex-wrap: wrap; gap: 8px; }
+    .class-checks label { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <nav class="nav">
+      <a href="index.html" class="logo">
+        <div class="logo-mark">🌍</div>
+        <div class="logo-text">Little Planet Academy<span>Admin</span></div>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="#" id="logoutNav">Logout</a>
+      </div>
+      <button class="hamburger" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="#" id="logoutMobile">Logout</a>
+    </div>
+  </header>
+
+  <main class="dash" id="dash" style="display:none;">
+    <div class="welcome">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p style="opacity:0.9;font-size:0.9rem;">Manage students, results & fees</p>
+      </div>
+      <button class="btn-logout" id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="tabs">
+      <button class="active" data-panel="students">Students</button>
+      <button data-panel="scheme">Scheme of Work</button>
+      <button data-panel="fees">Fees</button>
+      <button data-panel="payments">Payments</button>
+    </div>
+
+    <!-- STUDENTS PANEL -->
+    <div class="panel active" id="panel-students">
+      <div class="filter-row">
+        <select id="filterClass">
+          <option value="">All Classes</option>
+        </select>
+        <div class="search-box" style="flex:1;min-width:180px;margin:0;">
+          <input type="text" id="searchStudent" placeholder="Search by name..." />
+        </div>
+      </div>
+      <div class="card" id="studentsList">
+        <p class="empty">Loading students...</p>
+      </div>
+    </div>
+
+    <!-- SCHEME OF WORK PANEL -->
+    <div class="panel" id="panel-scheme">
+      <div class="filter-row">
+        <select id="schemeFilterClass">
+          <option value="">All Classes</option>
+        </select>
+        <button class="btn-sm btn-primary" id="addSchemeBtn">+ Add / Edit Scheme</button>
+      </div>
+      <div id="schemeList"><p class="empty">Loading scheme of work...</p></div>
+    </div>
+
+    <!-- FEES PANEL -->
+    <div class="panel" id="panel-fees">
+      <button class="btn-sm btn-primary" id="addFeeBtn" style="margin-bottom:14px;">+ Add New Fee</button>
+      <div id="feesAdminList"><p class="empty">Loading...</p></div>
+    </div>
+
+    <!-- PAYMENTS PANEL -->
+    <div class="panel" id="panel-payments">
+      <div id="paymentsList"><p class="empty">Loading payments...</p></div>
+    </div>
+  </main>
+
+  <!-- RESULTS MODAL -->
+  <div class="modal-overlay" id="resultsModal">
+    <div class="modal">
+      <h2 id="modalTitle">Upload Results</h2>
+      <p id="modalStudent" style="color:var(--muted);margin-bottom:12px;"></p>
+      <div class="form-group">
+        <label>Term</label>
+        <select id="resultTerm">
+          <option>1st Term</option>
+          <option>2nd Term</option>
+          <option>3rd Term</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subjects (Subject | Grade | Score)</label>
+        <div id="subjectRows"></div>
+      </div>
+      <div class="total-box">Total Score: <span id="totalScore">0</span></div>
+      <button class="btn-block btn-primary" id="saveResultsBtn">Save Results & Calculate Position</button>
+      <button class="btn-block btn-secondary" id="closeResultsBtn" style="background:var(--line);color:var(--text);">Cancel</button>
+    </div>
+  </div>
+
+  <!-- SCHEME MODAL -->
+  <div class="modal-overlay" id="schemeModal">
+    <div class="modal">
+      <h2 id="schemeModalTitle">Add Scheme of Work</h2>
+      <div class="form-group">
+        <label>Class</label>
+        <select id="schemeClass"></select>
+      </div>
+      <div class="form-group">
+        <label>Term</label>
+        <select id="schemeTerm">
+          <option>1st Term</option>
+          <option>2nd Term</option>
+          <option>3rd Term</option>
+          <option>Full Year</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="schemeSubject"></select>
+      </div>
+      <div class="form-group">
+        <label>Scheme of Work (topics, weeks, outline)</label>
+        <textarea id="schemeContent" rows="12" placeholder="Week 1: ...&#10;Week 2: ...&#10;Topic 1: ...&#10;Topic 2: ..." style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.95rem;resize:vertical;"></textarea>
+      </div>
+      <button class="btn-block btn-primary" id="saveSchemeBtn">Save Scheme of Work</button>
+      <button class="btn-block btn-secondary" id="closeSchemeBtn" style="background:var(--line);color:var(--text);">Cancel</button>
+    </div>
+  </div>
+
+  <!-- FEE MODAL -->
+  <div class="modal-overlay" id="feeModal">
+    <div class="modal">
+      <h2 id="feeModalTitle">Add Fee</h2>
+      <div class="form-group">
+        <label>Category / Name (e.g. School Fees, Hostel Fee)</label>
+        <input type="text" id="feeCategory" placeholder="School Fees" />
+      </div>
+      <div class="form-group">
+        <label>Description (optional)</label>
+        <input type="text" id="feeDesc" placeholder="Termly school fees" />
+      </div>
+      <div class="form-group">
+        <label>Amount (₦)</label>
+        <input type="number" id="feeAmount" min="0" step="100" placeholder="25000" />
+      </div>
+      <div class="form-group">
+        <label>Applies to Classes</label>
+        <div class="class-checks" id="feeClasses"></div>
+      </div>
+      <button class="btn-block btn-primary" id="saveFeeBtn">Save Fee</button>
+      <button class="btn-block btn-secondary" id="closeFeeBtn" style="background:var(--line);color:var(--text);">Cancel</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="script.js"></script>
+  <script>
+    let currentUser = null;
+    let profile = null;
+    let allStudents = [];
+    let editingStudent = null;
+    let editingFeeId = null;
+
+    function logout() {
+      auth.signOut().then(() => window.location.href = 'login.html');
+    }
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('logoutNav').onclick = e => { e.preventDefault(); logout(); };
+    document.getElementById('logoutMobile').onclick = e => { e.preventDefault(); logout(); };
+
+    // Tabs
+    document.querySelectorAll('.tabs button').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+        if (btn.dataset.panel === 'scheme') loadSchemes();
+        if (btn.dataset.panel === 'fees') loadFeesAdmin();
+        if (btn.dataset.panel === 'payments') loadPayments();
+      };
+    });
+
+    // Auth
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      currentUser = user;
+      profile = await getUserProfile(user.uid);
+      if (!profile || profile.role !== 'admin') {
+        alert('Admin access only');
+        await auth.signOut();
+        window.location.href = 'login.html';
+        return;
+      }
+      document.getElementById('dash').style.display = 'block';
+      // Populate filter classes
+      const fc = document.getElementById('filterClass');
+      CLASSES.forEach(c => {
+        const o = document.createElement('option'); o.value = c; o.textContent = c; fc.appendChild(o);
+      });
+      // Fee class checks
+      const fcDiv = document.getElementById('feeClasses');
+      const allLabel = document.createElement('label');
+      allLabel.innerHTML = '<input type="checkbox" value="All" id="checkAllClasses"> All Classes';
+      fcDiv.appendChild(allLabel);
+      CLASSES.forEach(c => {
+        const lab = document.createElement('label');
+        lab.innerHTML = `<input type="checkbox" value="${c}" class="class-check"> ${c}`;
+        fcDiv.appendChild(lab);
+      });
+      // Scheme filters & modal selects
+      const sfc = document.getElementById('schemeFilterClass');
+      const sc = document.getElementById('schemeClass');
+      CLASSES.forEach(cl => {
+        const o1 = document.createElement('option'); o1.value = cl; o1.textContent = cl; sfc.appendChild(o1);
+        const o2 = document.createElement('option'); o2.value = cl; o2.textContent = cl; sc.appendChild(o2);
+      });
+      const ss = document.getElementById('schemeSubject');
+      DEFAULT_SUBJECTS.forEach(s => {
+        const o = document.createElement('option'); o.value = s; o.textContent = s; ss.appendChild(o);
+      });
+      const oOther = document.createElement('option'); oOther.value = 'Other'; oOther.textContent = 'Other';
+      ss.appendChild(oOther);
+
+      loadStudents();
+    });
+
+    async function loadStudents() {
+      const snap = await db.collection('users').where('role', '==', 'student').orderBy('fullNameLower').get();
+      allStudents = [];
+      snap.forEach(doc => allStudents.push({ id: doc.id, ...doc.data() }));
+      renderStudents();
+    }
+
+    function renderStudents() {
+      const filter = document.getElementById('filterClass').value;
+      const search = document.getElementById('searchStudent').value.trim().toLowerCase();
+      let list = allStudents;
+      if (filter) list = list.filter(s => s.class === filter);
+      if (search) list = list.filter(s => (s.fullName || '').toLowerCase().includes(search));
+
+      const el = document.getElementById('studentsList');
+      if (!list.length) {
+        el.innerHTML = '<p class="empty">No students found.</p>';
+        return;
+      }
+      el.innerHTML = list.map(s => `
+        <div class="student-item" data-id="${s.id}">
+          <div>
+            <div class="student-name">${s.fullName}</div>
+            <div class="student-class">${s.class || '—'}</div>
+          </div>
+          <div class="actions">
+            <button class="btn-sm btn-primary btn-results" data-id="${s.id}">Upload Results</button>
+            <button class="btn-sm btn-danger btn-remove" data-id="${s.id}">Remove</button>
+          </div>
+        </div>
+      `).join('');
+
+      el.querySelectorAll('.btn-results').forEach(b => {
+        b.onclick = (e) => { e.stopPropagation(); openResultsModal(b.dataset.id); };
+      });
+      el.querySelectorAll('.btn-remove').forEach(b => {
+        b.onclick = (e) => { e.stopPropagation(); removeStudent(b.dataset.id); };
+      });
+    }
+
+    document.getElementById('filterClass').onchange = renderStudents;
+    document.getElementById('searchStudent').oninput = renderStudents;
+
+    async function removeStudent(uid) {
+      if (!confirm('Remove this student? Their results will remain but they can no longer login.')) return;
+      try {
+        await db.collection('users').doc(uid).delete();
+        // Note: Firebase Auth user is not deleted from client (needs Admin SDK). Profile is removed.
+        allStudents = allStudents.filter(s => s.id !== uid);
+        renderStudents();
+        alert('Student removed from list.');
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    // Results modal
+    function openResultsModal(uid) {
+      editingStudent = allStudents.find(s => s.id === uid);
+      if (!editingStudent) return;
+      document.getElementById('modalTitle').textContent = 'Upload Results';
+      document.getElementById('modalStudent').textContent = editingStudent.fullName + ' — ' + editingStudent.class;
+      document.getElementById('resultTerm').value = '1st Term';
+      buildSubjectRows();
+      document.getElementById('resultsModal').classList.add('open');
+      // Try load existing
+      loadExistingResult();
+    }
+
+    document.getElementById('resultTerm').onchange = loadExistingResult;
+
+    async function loadExistingResult() {
+      if (!editingStudent) return;
+      const term = document.getElementById('resultTerm').value;
+      const snap = await db.collection('results')
+        .where('studentId', '==', editingStudent.id)
+        .where('term', '==', term)
+        .limit(1).get();
+      if (!snap.empty) {
+        const data = snap.docs[0].data();
+        const rows = document.querySelectorAll('#subjectRows .subject-row');
+        (data.subjects || []).forEach((s, i) => {
+          if (rows[i]) {
+            rows[i].querySelector('.sub-name').value = s.subject || '';
+            rows[i].querySelector('.sub-grade').value = s.grade || '';
+            rows[i].querySelector('.sub-score').value = s.score != null ? s.score : '';
+          }
+        });
+        calcTotal();
+      } else {
+        buildSubjectRows();
+      }
+    }
+
+    function buildSubjectRows() {
+      const container = document.getElementById('subjectRows');
+      container.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const row = document.createElement('div');
+        row.className = 'subject-row';
+        const subSelect = `<select class="sub-name">
+          <option value="">Select subject</option>
+          ${DEFAULT_SUBJECTS.map(s => `<option value="${s}">${s}</option>`).join('')}
+          <option value="Other">Other...</option>
+        </select>`;
+        row.innerHTML = `
+          ${subSelect}
+          <input type="text" class="sub-grade" placeholder="Grade (A,B..)" maxlength="3" />
+          <input type="number" class="sub-score" placeholder="Score" min="0" max="100" step="1" />
+        `;
+        container.appendChild(row);
+        row.querySelector('.sub-score').addEventListener('input', calcTotal);
+        row.querySelector('.sub-name').addEventListener('change', function() {
+          if (this.value === 'Other') {
+            const inp = document.createElement('input');
+            inp.type = 'text'; inp.className = 'sub-name'; inp.placeholder = 'Type subject';
+            this.replaceWith(inp);
+          }
+        });
+      }
+      calcTotal();
+    }
+
+    function calcTotal() {
+      let total = 0;
+      document.querySelectorAll('#subjectRows .sub-score').forEach(inp => {
+        const v = parseFloat(inp.value);
+        if (!isNaN(v)) total += v;
+      });
+      document.getElementById('totalScore').textContent = total;
+    }
+
+    document.getElementById('closeResultsBtn').onclick = () => {
+      document.getElementById('resultsModal').classList.remove('open');
+      editingStudent = null;
+    };
+
+    document.getElementById('saveResultsBtn').onclick = async () => {
+      if (!editingStudent) return;
+      const term = document.getElementById('resultTerm').value;
+      const subjects = [];
+      document.querySelectorAll('#subjectRows .subject-row').forEach(row => {
+        const subject = row.querySelector('.sub-name').value.trim();
+        const grade = row.querySelector('.sub-grade').value.trim();
+        const scoreVal = row.querySelector('.sub-score').value;
+        const score = scoreVal === '' ? null : parseFloat(scoreVal);
+        if (subject) subjects.push({ subject, grade, score });
+      });
+      if (!subjects.length) { alert('Add at least one subject'); return; }
+
+      const total = subjects.reduce((sum, s) => sum + (s.score || 0), 0);
+      const btn = document.getElementById('saveResultsBtn');
+      btn.disabled = true; btn.textContent = 'Saving...';
+
+      try {
+        // Upsert result for this student+term
+        const existing = await db.collection('results')
+          .where('studentId', '==', editingStudent.id)
+          .where('term', '==', term)
+          .limit(1).get();
+
+        const payload = {
+          studentId: editingStudent.id,
+          studentName: editingStudent.fullName,
+          class: editingStudent.class,
+          term,
+          subjects,
+          total,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (!existing.empty) {
+          await existing.docs[0].ref.update(payload);
+        } else {
+          payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('results').add(payload);
+        }
+
+        // Recalculate positions for this class + term
+        await recalculatePositions(editingStudent.class, term);
+
+        alert('Results saved. Positions updated for ' + editingStudent.class + ' – ' + term);
+        document.getElementById('resultsModal').classList.remove('open');
+        editingStudent = null;
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Results & Calculate Position';
+      }
+    };
+
+    async function recalculatePositions(className, term) {
+      const snap = await db.collection('results')
+        .where('class', '==', className)
+        .where('term', '==', term)
+        .get();
+      const rows = [];
+      snap.forEach(doc => rows.push({ ref: doc.ref, total: doc.data().total || 0 }));
+      rows.sort((a, b) => b.total - a.total);
+      // Assign positions (handle ties)
+      let pos = 1;
+      for (let i = 0; i < rows.length; i++) {
+        if (i > 0 && rows[i].total < rows[i - 1].total) pos = i + 1;
+        await rows[i].ref.update({ position: pos });
+      }
+    }
+
+    // Fees
+    document.getElementById('addFeeBtn').onclick = () => {
+      editingFeeId = null;
+      document.getElementById('feeModalTitle').textContent = 'Add New Fee';
+      document.getElementById('feeCategory').value = '';
+      document.getElementById('feeDesc').value = '';
+      document.getElementById('feeAmount').value = '';
+      document.querySelectorAll('#feeClasses input').forEach(c => c.checked = false);
+      document.getElementById('feeModal').classList.add('open');
+    };
+    document.getElementById('closeFeeBtn').onclick = () => document.getElementById('feeModal').classList.remove('open');
+
+    document.getElementById('saveFeeBtn').onclick = async () => {
+      const category = document.getElementById('feeCategory').value.trim();
+      const description = document.getElementById('feeDesc').value.trim();
+      const amount = parseFloat(document.getElementById('feeAmount').value);
+      if (!category || isNaN(amount) || amount < 0) {
+        alert('Please enter category and valid amount');
+        return;
+      }
+      const classes = [];
+      document.querySelectorAll('#feeClasses input:checked').forEach(c => classes.push(c.value));
+      if (!classes.length) {
+        alert('Select at least one class (or All)');
+        return;
+      }
+
+      const btn = document.getElementById('saveFeeBtn');
+      btn.disabled = true;
+      try {
+        const data = {
+          category,
+          description,
+          amount,
+          classes,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (editingFeeId) {
+          await db.collection('fees').doc(editingFeeId).update(data);
+        } else {
+          data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('fees').add(data);
+        }
+        document.getElementById('feeModal').classList.remove('open');
+        loadFeesAdmin();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    async function loadFeesAdmin() {
+      const snap = await db.collection('fees').orderBy('createdAt', 'desc').get();
+      const el = document.getElementById('feesAdminList');
+      if (snap.empty) {
+        el.innerHTML = '<p class="empty">No fees created yet. Click “Add New Fee”.</p>';
+        return;
+      }
+      el.innerHTML = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div>
+              <strong style="color:var(--purple-dark);">${d.category}</strong>
+              <div style="font-size:0.9rem;color:var(--muted);">${d.description || ''}</div>
+              <div style="margin-top:6px;font-weight:700;">₦${Number(d.amount).toLocaleString()}</div>
+              <div style="font-size:0.8rem;color:var(--muted);margin-top:4px;">Classes: ${(d.classes || []).join(', ')}</div>
+            </div>
+            <div class="actions">
+              <button class="btn-sm btn-secondary btn-edit-fee" data-id="${doc.id}">Edit</button>
+              <button class="btn-sm btn-danger btn-del-fee" data-id="${doc.id}">Delete</button>
+            </div>
+          </div>`;
+        el.appendChild(card);
+      });
+      el.querySelectorAll('.btn-del-fee').forEach(b => {
+        b.onclick = async () => {
+          if (!confirm('Delete this fee?')) return;
+          await db.collection('fees').doc(b.dataset.id).delete();
+          loadFeesAdmin();
+        };
+      });
+      el.querySelectorAll('.btn-edit-fee').forEach(b => {
+        b.onclick = async () => {
+          const doc = await db.collection('fees').doc(b.dataset.id).get();
+          const d = doc.data();
+          editingFeeId = b.dataset.id;
+          document.getElementById('feeModalTitle').textContent = 'Edit Fee';
+          document.getElementById('feeCategory').value = d.category || '';
+          document.getElementById('feeDesc').value = d.description || '';
+          document.getElementById('feeAmount').value = d.amount || '';
+          document.querySelectorAll('#feeClasses input').forEach(c => {
+            c.checked = (d.classes || []).includes(c.value);
+          });
+          document.getElementById('feeModal').classList.add('open');
+        };
+      });
+    }
+
+    // ========== SCHEME OF WORK ==========
+    let editingSchemeId = null;
+
+    document.getElementById('addSchemeBtn').onclick = () => {
+      editingSchemeId = null;
+      document.getElementById('schemeModalTitle').textContent = 'Add Scheme of Work';
+      document.getElementById('schemeClass').value = CLASSES[0] || '';
+      document.getElementById('schemeTerm').value = '1st Term';
+      document.getElementById('schemeSubject').value = DEFAULT_SUBJECTS[0] || '';
+      document.getElementById('schemeContent').value = '';
+      document.getElementById('schemeModal').classList.add('open');
+    };
+    document.getElementById('closeSchemeBtn').onclick = () => {
+      document.getElementById('schemeModal').classList.remove('open');
+      editingSchemeId = null;
+    };
+    document.getElementById('schemeFilterClass').onchange = loadSchemes;
+
+    document.getElementById('saveSchemeBtn').onclick = async () => {
+      const className = document.getElementById('schemeClass').value;
+      const term = document.getElementById('schemeTerm').value;
+      let subject = document.getElementById('schemeSubject').value;
+      const content = document.getElementById('schemeContent').value.trim();
+      if (!className || !subject || !content) {
+        alert('Please fill Class, Subject and Scheme content');
+        return;
+      }
+      if (subject === 'Other') {
+        subject = prompt('Enter subject name:') || '';
+        if (!subject) return;
+      }
+      const btn = document.getElementById('saveSchemeBtn');
+      btn.disabled = true;
+      try {
+        const data = {
+          class: className,
+          term,
+          subject,
+          content,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (editingSchemeId) {
+          await db.collection('schemes').doc(editingSchemeId).update(data);
+        } else {
+          // Check if same class+term+subject exists → update instead
+          const exist = await db.collection('schemes')
+            .where('class', '==', className)
+            .where('term', '==', term)
+            .where('subject', '==', subject)
+            .limit(1).get();
+          if (!exist.empty) {
+            await exist.docs[0].ref.update(data);
+          } else {
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('schemes').add(data);
+          }
+        }
+        document.getElementById('schemeModal').classList.remove('open');
+        editingSchemeId = null;
+        loadSchemes();
+        alert('Scheme of work saved for ' + className + ' – ' + subject + ' (' + term + ')');
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    async function loadSchemes() {
+      const filter = document.getElementById('schemeFilterClass').value;
+      let query = db.collection('schemes').orderBy('class');
+      const snap = await db.collection('schemes').get();
+      let items = [];
+      snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+      if (filter) items = items.filter(x => x.class === filter);
+      // Sort by class, term, subject
+      items.sort((a, b) => {
+        const ca = (a.class || '').localeCompare(b.class || '');
+        if (ca) return ca;
+        const ta = (a.term || '').localeCompare(b.term || '');
+        if (ta) return ta;
+        return (a.subject || '').localeCompare(b.subject || '');
+      });
+      const el = document.getElementById('schemeList');
+      if (!items.length) {
+        el.innerHTML = '<p class="empty">No scheme of work yet. Click “Add / Edit Scheme”.</p>';
+        return;
+      }
+      el.innerHTML = '';
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const preview = (item.content || '').slice(0, 180).replace(/\n/g, ' ');
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <strong style="color:var(--purple-dark);">${item.subject || '—'}</strong>
+              <div style="font-size:0.85rem;color:var(--muted);margin:4px 0;">${item.class || ''} · ${item.term || ''}</div>
+              <div style="font-size:0.9rem;white-space:pre-wrap;color:var(--text);margin-top:6px;">${preview}${(item.content || '').length > 180 ? '…' : ''}</div>
+            </div>
+            <div class="actions">
+              <button class="btn-sm btn-secondary btn-edit-scheme" data-id="${item.id}">Edit</button>
+              <button class="btn-sm btn-danger btn-del-scheme" data-id="${item.id}">Delete</button>
+            </div>
+          </div>`;
+        el.appendChild(card);
+      });
+      el.querySelectorAll('.btn-del-scheme').forEach(b => {
+        b.onclick = async () => {
+          if (!confirm('Delete this scheme of work?')) return;
+          await db.collection('schemes').doc(b.dataset.id).delete();
+          loadSchemes();
+        };
+      });
+      el.querySelectorAll('.btn-edit-scheme').forEach(b => {
+        b.onclick = async () => {
+          const doc = await db.collection('schemes').doc(b.dataset.id).get();
+          const d = doc.data();
+          editingSchemeId = b.dataset.id;
+          document.getElementById('schemeModalTitle').textContent = 'Edit Scheme of Work';
+          document.getElementById('schemeClass').value = d.class || '';
+          document.getElementById('schemeTerm').value = d.term || '1st Term';
+          // subject may not be in list
+          const subSel = document.getElementById('schemeSubject');
+          if (![...subSel.options].some(o => o.value === d.subject)) {
+            const o = document.createElement('option'); o.value = d.subject; o.textContent = d.subject;
+            subSel.insertBefore(o, subSel.lastChild);
+          }
+          subSel.value = d.subject || '';
+          document.getElementById('schemeContent').value = d.content || '';
+          document.getElementById('schemeModal').classList.add('open');
+        };
+      });
+    }
+
+    async function loadPayments() {
+      const snap = await db.collection('payments').orderBy('paidAt', 'desc').limit(50).get();
+      const el = document.getElementById('paymentsList');
+      if (snap.empty) {
+        el.innerHTML = '<p class="empty">No payments yet.</p>';
+        return;
+      }
+      el.innerHTML = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const card = document.createElement('div');
+        card.className = 'card';
+        const date = d.paidAt ? (d.paidAt.toDate ? d.paidAt.toDate().toLocaleString() : '') : '';
+        card.innerHTML = `
+          <strong>${d.studentName || '—'}</strong> (${d.class || ''})
+          <div style="font-size:0.9rem;">${d.feeName || 'Fee'} — ₦${Number(d.amount || 0).toLocaleString()}</div>
+          <div style="font-size:0.8rem;color:var(--muted);">Ref: ${d.reference || '—'} · ${date}</div>
+        `;
+        el.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
