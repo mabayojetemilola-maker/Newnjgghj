@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login / Register – Little Planet Academy</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .auth-wrap { max-width: 420px; margin: 40px auto; padding: 0 16px; }
+    .auth-card {
+      background: #fff; border-radius: 16px; padding: 28px 24px;
+      box-shadow: 0 8px 32px rgba(91,44,138,0.12); border: 1px solid var(--line);
+    }
+    .auth-card h1 { font-size: 1.4rem; color: var(--purple-dark); margin-bottom: 6px; }
+    .auth-card .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 22px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tabs button {
+      flex: 1; padding: 10px; border: none; border-radius: 10px; font-weight: 600;
+      cursor: pointer; background: var(--purple-soft); color: var(--purple);
+    }
+    .tabs button.active { background: var(--purple); color: #fff; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--text); }
+    .form-group input, .form-group select {
+      width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px;
+      font-size: 0.95rem; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus { outline: 2px solid var(--purple-mid); border-color: transparent; }
+    .btn-auth {
+      width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 700;
+      font-size: 1rem; cursor: pointer; background: linear-gradient(135deg, var(--purple), var(--purple-mid));
+      color: #fff; margin-top: 8px;
+    }
+    .btn-auth:disabled { opacity: 0.6; cursor: not-allowed; }
+    .msg { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 0.9rem; display: none; }
+    .msg.error { background: #fde8e8; color: #b91c1c; display: block; }
+    .msg.success { background: #e8f5e9; color: #166534; display: block; }
+    .back-link { display: block; text-align: center; margin-top: 18px; color: var(--purple); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <nav class="nav">
+      <a href="index.html" class="logo">
+        <div class="logo-mark">🌍</div>
+        <div class="logo-text">Little Planet Academy<span>Giginyu, Kano</span></div>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="login.html" class="active">Student Login</a>
+      </div>
+      <button class="hamburger" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Home</a>
+      <a href="academics.html">Academics</a>
+      <a href="about.html">About</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Student Login</a>
+    </div>
+  </header>
+
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <h1>Student Portal</h1>
+      <p class="sub">Login or create an account with your full name, class & password.</p>
+
+      <div class="tabs">
+        <button type="button" id="tabLogin" class="active">Login</button>
+        <button type="button" id="tabRegister">Create Account</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginName">Full Name</label>
+          <input type="text" id="loginName" placeholder="e.g. Aisha Yusuf" required autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Your password" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn-auth" id="loginBtn">Login</button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="registerForm" style="display:none;">
+        <div class="form-group">
+          <label for="regName">Full Name</label>
+          <input type="text" id="regName" placeholder="e.g. Aisha Yusuf" required autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label for="regClass">Class</label>
+          <select id="regClass" required>
+            <option value="">Select class</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="regCode">School Registration Code</label>
+          <input type="text" id="regCode" placeholder="Enter the school code" required autocomplete="off" />
+          <small style="color:var(--muted);font-size:0.8rem;">Ask the school for this code. Without it you cannot register.</small>
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <input type="password" id="regPassword" placeholder="Create a password (min 6 chars)" required minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="regPassword2">Confirm Password</label>
+          <input type="password" id="regPassword2" placeholder="Confirm password" required minlength="6" />
+        </div>
+        <button type="submit" class="btn-auth" id="regBtn">Create Account</button>
+      </form>
+
+      <div class="msg" id="msg"></div>
+      <a href="index.html" class="back-link">← Back to Home</a>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="script.js"></script>
+  <script>
+    // Populate class select
+    const classSelect = document.getElementById('regClass');
+    CLASSES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      classSelect.appendChild(opt);
+    });
+
+    const tabLogin = document.getElementById('tabLogin');
+    const tabRegister = document.getElementById('tabRegister');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const msg = document.getElementById('msg');
+
+    function showMsg(text, type) {
+      msg.textContent = text;
+      msg.className = 'msg ' + type;
+    }
+
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+      loginForm.style.display = 'block'; registerForm.style.display = 'none';
+      msg.className = 'msg';
+    });
+    tabRegister.addEventListener('click', () => {
+      tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+      registerForm.style.display = 'block'; loginForm.style.display = 'none';
+      msg.className = 'msg';
+    });
+
+    // LOGIN
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('loginName').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!fullName || !password) return showMsg('Please fill all fields', 'error');
+
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true; btn.textContent = 'Logging in...';
+
+      try {
+        const email = nameToEmail(fullName);
+        const cred = await auth.signInWithEmailAndPassword(email, password);
+        const profile = await getUserProfile(cred.user.uid);
+        if (!profile) throw new Error('Profile not found. Please register again.');
+        if (profile.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'student.html';
+        }
+      } catch (err) {
+        console.error(err);
+        let m = err.message || 'Login failed';
+        if (m.includes('user-not-found') || m.includes('invalid-credential') || m.includes('wrong-password')) {
+          m = 'Wrong full name or password. Please try again or create an account.';
+        }
+        showMsg(m, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Login';
+      }
+    });
+
+    // REGISTER
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('regName').value.trim();
+      const className = document.getElementById('regClass').value;
+      const regCode = document.getElementById('regCode').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const password2 = document.getElementById('regPassword2').value;
+
+      if (!fullName || !className || !regCode || !password) return showMsg('Please fill all fields', 'error');
+      if (password !== password2) return showMsg('Passwords do not match', 'error');
+      if (password.length < 6) return showMsg('Password must be at least 6 characters', 'error');
+
+      const btn = document.getElementById('regBtn');
+      btn.disabled = true; btn.textContent = 'Creating...';
+
+      try {
+        // Verify school registration code
+        const settingsDoc = await db.collection('settings').doc('school').get();
+        const schoolCode = settingsDoc.exists ? (settingsDoc.data().registrationCode || '') : '';
+        if (!schoolCode) {
+          throw new Error('Registration is not open yet. Contact the school admin.');
+        }
+        if (regCode.toLowerCase() !== String(schoolCode).toLowerCase()) {
+          throw new Error('Wrong school registration code. Ask the school for the correct code.');
+        }
+
+        const email = nameToEmail(fullName);
+        // Check if name already used
+        const existing = await db.collection('users').where('fullNameLower', '==', fullName.toLowerCase()).limit(1).get();
+        if (!existing.empty) {
+          throw new Error('This full name is already registered. Please login or use a different name.');
+        }
+
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        await db.collection('users').doc(cred.user.uid).set({
+          fullName: fullName,
+          fullNameLower: fullName.toLowerCase(),
+          class: className,
+          role: 'student',
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showMsg('Account created! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'student.html', 800);
+      } catch (err) {
+        console.error(err);
+        let m = err.message || 'Registration failed';
+        if (m.includes('email-already-in-use')) m = 'This name is already registered. Please login.';
+        if (m.includes('permission-denied') || m.includes('Missing or insufficient')) {
+          m = 'Cannot save account (Firestore permission). Admin must open Firestore rules for authenticated users.';
+        }
+        showMsg(m, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Create Account';
+      }
+    });
+
+    // If already logged in, redirect
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const profile = await getUserProfile(user.uid);
+        if (profile) {
+          window.location.href = profile.role === 'admin' ? 'admin.html' : 'student.html';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
